@@ -1,93 +1,112 @@
+import './style.css';
+import PropTypes from "prop-types";
+import React, { Component } from 'react';
+import { TextField } from '@material-ui/core/';
+import SendIcon from '@material-ui/icons/Send';
+import Message from '../Message/Message.jsx';
 
-        import './style.css';
-        import React, { Component, Fragment } from 'react';
+export default class MessageField extends Component {
+    constructor(props) {
+        super(props);
+        this.textInput = React.createRef();
+        this.msgField = React.createRef();
+    }
 
-        import Message from '../Message/Message.jsx';
+    static propTypes = {
+        chatId: PropTypes.number.isRequired
+    };
+ 
+    state = {
+        chats: {
+            1: {title: 'Пользователь 1', messageList: [1]},
+            2: {title: 'Пользователь 2', messageList: [2]},
+            3: {title: 'Пользователь 3', messageList: [3]},
+        },
 
-        export default class MessageField extends Component {
-            constructor(props) {
-                super(props);
-                this.state = {
-                    text: '',
-                   
-                    messages: [
-                        {
-                            sender: 'Eleonora',
-                            text: 'Hello'
-                        },
-                        {
-                            sender: 'Valeri',
-                            text: 'Hi'
-                            
-                        },
-                        {
-                            sender: 'Eleonora',
-                            text: 'how are you?'
-                            
-                        },
-                        {
-                            sender: 'Valeri',
-                            text: 'fine'
-                        }
-                    ]
-                   
-                }
-            }
-
-            handleChange = evt => {
-                this.setState({ text: evt.target.value });
-               
-            }
-
-            sendMessage = () => {
-                this.setState({ 
-                    text: '',
-                    messages: [...this.state.messages, {
-                            sender: this.props.name,
-                            text: this.state.text
-                        } 
-                    ]
-                });
-            }
-
-            componentDidUpdate() {
-                if (this.state.messages.length % 2 === 1) {
-                    setTimeout(() =>
-                    this.setState({
-                        messages: [...this.state.messages,  {
-                            sender: "evm", 
-                            text: `${this.state.messages[this.state.messages.length-1].sender}. Не приставай ко мне, я робот!`
-                        }]
-                    }),
-                    1000);
-                }
-            }
-
-            render() {
-                let { messages } = this.state;
-
-                let contentArray = messages.map((msg, index) => {
-                    let { text, sender } = msg;
-                    return <Message text = { text } sender = { sender } key = { index }/>
-                });
-
-               
+        messages: {
+            1: { text: "Перезвони!!", sender: 'Bot' },
+            2: { text: "Мам, когда будешь дома?", sender: 'Bot' },
+            3: { text: "Привет!", sender: 'Bot' },
+        },
         
-                return (
-                    <div className="d-flex flex-column">
-                        <div>
-                            { contentArray }
-                        </div>
-                        <div className="controls d-flex">
-                            <input 
-                                type="text" 
-                                value = { this.state.text }
-                                onChange = { this.handleChange }
-                            />
-                            <button className="send_Btn" onClick = { this.sendMessage }>Send</button>
-                        </div>
-                    </div>
-                )
-            }
+        input: '',
+    };
+
+    componentDidMount() {
+        this.textInput.current.children[0].firstChild.focus();
+        this.textInput.current.children[0].firstChild.style.color = '#787878';
+    }    
+
+    componentDidUpdate(prevProps, prevState) {
+        const { messages } = this.state;
+        if (Object.keys(prevState.messages).length < Object.keys(messages).length &&
+            Object.values(messages)[Object.values(messages).length - 1].sender === 'я' && 
+            Object.values(messages)[Object.values(messages).length - 2].sender !== 'я') {
+            setTimeout(() =>
+                this.handleSendMessage('Не приставай ко мне, я робот!', 'Bot'), 1000);
         }
-    
+        this.textInput.current.children[0].firstChild.focus();
+        this.msgField.current.scrollTop = this.msgField.current.scrollHeight;
+    }
+ 
+    handleSendMessage = (message, sender) => {
+        const { messages, chats, input } = this.state;
+        const { chatId } = this.props;
+ 
+        if (input.length > 0 || sender === 'Bot') {
+            const messageId = Object.keys(messages).length + 1;
+            this.setState({
+                messages: {...messages, [messageId]: {text: message, sender: sender}}, 
+                chats: {...chats, [chatId]: { ...chats[chatId], messageList: [...chats[chatId]['messageList'], messageId]}},
+            })
+        }
+        if (sender === 'я') {
+            this.setState({ input: '' })
+        }
+    };
+ 
+    handleChange = (event) => {
+        this.setState({ [event.target.name]: event.target.value });
+    };
+
+    handleKeyUp = (event) => {
+        if (event.keyCode === 13) {
+            this.handleSendMessage(this.state.input, 'я')
+        }
+    };
+ 
+    render() {
+        const { messages, chats } = this.state;
+        const { chatId } = this.props;
+ 
+        const messageElements = chats[chatId].messageList.map((messageId, index) => (
+            <Message
+                key={ index }
+                text={ messages[messageId].text }
+                sender={ messages[messageId].sender }
+            />));
+ 
+        return [
+            <div className="layout">
+                <div key='messageElements' className="MsgField" ref={ this.msgField }>
+                    { messageElements }
+                </div>
+                <div key='textInput' className="controls d-flex">
+                    <TextField
+                        name="input"
+                        fullWidth={ true }
+                        placeholder="Введите сообщение"
+                        type="text"
+                        ref={ this.textInput }
+                        value={ this.state.input }
+                        onChange={ this.handleChange }
+                        onKeyUp={ this.handleKeyUp }
+                    />
+                    <button className="sendBtn" style={ { outline: 'none' } } onClick={ () => this.handleSendMessage(this.state.input, 'я') }>
+                        <SendIcon style={ { fontSize: '1.4em' } } />
+                    </button>
+                </div>
+            </div>
+        ]
+    }
+}

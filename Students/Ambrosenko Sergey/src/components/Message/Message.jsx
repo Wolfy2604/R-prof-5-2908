@@ -1,15 +1,19 @@
-        import './style.css';
-        import React from 'react';
+import './style.css';
+import React from 'react';
 
-        export default props => {
-            let { sender, text } = props;
-
+export default class Message extends React.Component {
+    render() {
+        let { sender, text } = this.props;
+        
+        if ( text.length < 1 ) {
+            return null;
+        } else {
             return (
-                    <div className="d-flex flex-column msg">
-                        { sender && <strong>{ sender }</strong> }
-                        { !sender && <strong>Barak</strong> }
-                        <p>{ sender || (!sender && text) ? text : 'Cyber answer...' }</p>
-                    </div>
+                <div className="msg" style={{ alignSelf: sender === 'Bot' ? 'flex-start' : 'flex-end'}}>
+                    <div>{ text }</div>
+                    <div className="msg-sender">{ sender }</div>
+                </div>
             )
         }
-    
+    }
+}

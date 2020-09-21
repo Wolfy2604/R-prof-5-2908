@@ -1,5 +1,8 @@
 import React from 'react';
 
+import './style.css'
+import CallMadeIcon from '@material-ui/icons/CallMade';
+
 import Message from '../Message/Message.jsx';
 
 export default class MessageField extends React.Component {
@@ -7,96 +10,134 @@ export default class MessageField extends React.Component {
         super(props);
         this.state = {
             text: '',
-            messages: [
-                {
-                    sender: 'Darth Vader',
-                    text: 'Hello'
+            chats: {
+                1: {
+                    name: 'Darth Vader',
+                    messages: [
+                        {
+                            sender: 'Darth Vader',
+                            text: 'Hello',
+                            isUser:false
+                        },
+                        {
+                            sender: 'Darth Vader',
+                            text: 'I am your father',
+                            isUser:false
+                        },
+                        {
+                            sender: 'Luke',
+                            text: 'Hello',
+                            isUser:false
+                        },
+                        {
+                            sender: 'Luke',
+                            text: 'Nooooooo',
+                            isUser:false
+                        },
+                        {
+                            sender: 'Luke',
+                            text: 'Nooooooo',
+                            isUser:false
+                        },
+                        {
+                            sender: 'Luke',
+                            text: 'Nooooooo',
+                            isUser:false
+                        },
+                    ]
                 },
-                {
-                    sender: 'Darth Vader',
-                    text: 'I am your father'
+                2: {
+                    name: 'Chub aka',
+                    messages: [
+                        {
+                            sender: 'Chub aka',
+                            text: 'WHAT',
+                            isUser:false
+                        }
+                    ],
                 },
-                {
-                    sender: null,
-                    text: 'Hello'
-                },
-                {
-                    sender: null,
-                    text: 'Nooooooo'
-                },
-            ],
-            commonMessage : {
-                sender: 'DARTH VADER',
-                text: 'COME TO ME',
-            }
+                3: {
+                    name: '',
+                    messages: []
+                }
+            },
+            currentChat: {},
         }
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-        if ( prevState.text !== this.state.text) {
-            let { messages } = this.state;
-
-            this.state.messages.push(this.state.commonMessage);
-            let contentArray = messages.map((msg, index) => {
-                let { text, sender } = msg;
-                return <Message text = { text } sender = { sender } key = { index }/>
-            });
-
-            return (
-                <div className="d-flex flex-column">
-                    <div>
-                        { contentArray }
-                    </div>
-                    <div className="controls d-flex">
-                        <input
-                            type="text"
-                            value = { this.state.text }
-                            onChange = { this.handleChange }
-                        />
-                        <button onClick = { this.sendMessage }>Send</button>
-                    </div>
-                </div>
-            )
-        }
-
     }
 
     handleChange = evt => {
-        this.setState({ text: evt.target.value });
+        if (evt.keyCode !== 13) {
+            this.setState({ text: evt.target.value });
+        } else {
+            this.sendMessage();
+        }
     }
 
     sendMessage = () => {
-        this.setState({
-            text: '',
-            messages: [...this.state.messages, {
+        this.setState((state) => {
+            return (
+                state.currentChat.messages = [...state.currentChat.messages, {
                 sender: this.props.name,
-                text: this.state.text
-            }
-            ],
+                text: this.state.text,
+                    isUser: true,
+            }]
+            )
         });
-        console.log(this.state.text);
+        this.setState({
+            text: ''
+        })
+    }
+
+    componentWillMount() {
+        this.state.currentChat = this.state.chats[this.props.chatId];
+    }
+
+    componentDidMount() {
+        const container = document.querySelector('.messageField');
+        container.scrollTop =  container.scrollHeight;
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        const container = document.querySelector('.messageField');
+        container.scrollTop =  container.scrollHeight;
+    }
+
+    componentWillUpdate(nextProps, nextState, nextContext) {
+        this.state.currentChat = this.state.chats[this.props.chatId];
+        console.log(this.state.currentChat);
     }
 
     render() {
-        let { messages } = this.state;
+        const { currentChat } = this.state;
 
-        let contentArray = messages.map((msg, index) => {
-            let { text, sender } = msg;
-            return <Message text = { text } sender = { sender } key = { index }/>
+        let contentArray = currentChat.messages.map((msg, index) => {
+            let { text, sender, isUser } = msg;
+            return <Message text = { text }
+                            sender = { sender }
+                            isUser = { isUser }
+                            key = { index }/>
         });
 
         return (
-            <div className="d-flex flex-column">
-                <div>
+            <div>
+                <div className="messageField">
                     { contentArray }
                 </div>
                 <div className="controls d-flex">
-                    <input
-                        type="text"
+                    <textarea
                         value = { this.state.text }
                         onChange = { this.handleChange }
+                        onKeyUp={ this.handleChange }
+                        placeholder= { "Введите сообщение..." }
+                        autoFocus={ true }
+                        cols = "30"
+                        rows = "3"
                     />
-                    <button onClick = { this.sendMessage }>Send</button>
+                    <button className="send"
+                            onClick = { this.sendMessage }>
+                        <span>Send</span>
+                        <CallMadeIcon />
+                    </button>
                 </div>
             </div>
         )
